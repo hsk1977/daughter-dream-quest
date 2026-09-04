@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Daughter's Dream Quests</title>
+    <style>
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            user-select: none; 
+            -webkit-user-select: none;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Comic Sans MS", Tahoma, sans-serif; 
+        }
+
+        body { 
+            background: linear-gradient(135deg, #eed9c4, #d8b4e2, #bde0fe);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+            direction: ltr; 
+        }
+
+        .phone-frame {
+            background: #fff6ea;
+            border: 4px solid #d4a373;
+            border-radius: 28px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 390px;
+            height: 100vh;
+            height: 100dvh;
+            max-height: 750px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #fx-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 90;
+            display: none;
+        }
+
+        .network-indicator {
+            position: absolute;
+            top: 10px;
+            left: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #8c531b;
+            z-index: 50;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #f1c40f;
+        }
+        .dot.online { background: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
+        .dot.error { background: #e74c3c; }
+
+        /* 1. Connect Screen */
+        #connect-screen {
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            width: 100%;
+        }
+        .main-title {
+            color: #8c531b;
+            font-size: 24px;
+            font-weight: 900;
+            text-shadow: 1px 1px 0 #fff;
+            margin-bottom: 20px;
+        }
+        .btn-action {
+            width: 100%;
+            padding: 13px;
+            margin: 6px 0;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .btn-action:active { transform: scale(0.97); }
+        .btn-host { background: #e76f51; color: white; box-shadow: 0 4px 0 #b3472d; }
+        
+        .input-group { 
+            display: flex; 
+            gap: 8px; 
+            width: 100%; 
+            margin-top: 6px;
+            align-items: stretch;
+        }
+        .input-code {
+            flex: 1 1 auto;
+            min-width: 0;
+            padding: 12px;
+            border: 2px solid #d4a373;
+            border-radius: 14px;
+            font-size: 17px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            outline: none;
+            background: #fff;
+        }
+        .btn-join { 
+            flex: 0 0 auto;
+            width: auto;
+            margin: 0;
+            padding: 12px 20px;
+            background: #2a9d8f; 
+            color: white; 
+            box-shadow: 0 4px 0 #1b665d;
+            white-space: nowrap;
+        }
+        
+        .room-code-box {
+            font-size: 28px;
+            font-weight: 900;
+            color: #b3472d;
+            background: #ffe3c0;
+            border: 2px dashed #e76f51;
+            padding: 6px 14px;
+            border-radius: 12px;
+            margin: 8px 0;
+            letter-spacing: 3px;
+        }
+        .status-txt { margin-top: 15px; font-size: 13px; color: #8c531b; font-weight: bold; min-height: 20px; }
+
+        /* 2. Quests Screen */
+        #quests-screen {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            padding: 16px 14px;
+            justify-content: space-between;
+        }
+        .header-title {
+            text-align: center;
+            position: relative;
+            margin-top: 10px;
+        }
+        .header-title h2 {
+            color: #c97a2b;
+            font-size: 21px;
+            font-weight: 900;
+            line-height: 1.1;
+            text-shadow: 1px 1px 0px #fff;
+        }
+        .header-title span {
+            color: #e28743;
+            font-size: 17px;
+        }
+        .compass-icon {
+            position: absolute;
+            right: 2px;
+            top: -2px;
+            width: 36px;
+            height: 36px;
+            background: #fff;
+            border-radius: 50%;
+            border: 3px solid #b87333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+
+        .quests-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+            flex: 1;
+            align-content: center;
+        }
+
+        .quest-card {
+            background: #d8d3cd;
+            border: 3px solid #b3a99f;
+            border-radius: 16px;
+            height: 98px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.6), 0 4px 6px rgba(0,0,0,0.1);
+            filter: grayscale(0.9) opacity(0.85);
+            cursor: not-allowed;
+            transition: transform 0.15s;
+        }
+
+        .quest-card.unlocked {
+            background: linear-gradient(135deg, #a24bcf, #6722a8);
+            border: 3px solid #ffd166;
+            filter: none;
+            cursor: pointer;
+            box-shadow: 0 0 14px rgba(255, 209, 102, 0.8), 0 4px 8px rgba(0,0,0,0.2);
+            color: white;
+            transform: scale(1.02);
+        }
+        .quest-card.unlocked .banner-text {
+            font-size: 13px;
+            font-weight: 900;
+            text-align: center;
+            text-transform: uppercase;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            line-height: 1.1;
+        }
+        .quest-card.unlocked .fairy-icon {
+            font-size: 28px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .quest-card .lock-icon {
+            position: absolute;
+            bottom: -5px;
+            right: 5px;
+            background: #d4a373;
+            border: 2px solid #8c531b;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+        .quest-card .card-num { font-size: 26px; font-weight: 900; color: #8c827a; }
+        .quest-card .card-subtext { font-size: 10px; font-weight: bold; color: #665f59; margin-top: 2px; text-align: center; }
+
+        .start-game-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .btn-stone-start {
+            background: linear-gradient(180deg, #48bfe3, #0077b6);
+            border: 4px solid #90e0ef;
+            border-radius: 24px;
+            color: white;
+            font-size: 18px;
+            font-weight: 900;
+            padding: 12px 32px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #023e8a, 0 8px 12px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .btn-stone-start:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #023e8a;
+        }
+        .btn-settings {
+            background: #d4a373;
+            border: 2px solid #8c531b;
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* 3. Game Screen */
+        #game-screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            touch-action: none;
+            position: relative;
+        }
+
+        .pattern-bg {
+            background-image: radial-gradient(rgba(255,255,255,0.18) 15%, transparent 16%),
+                              radial-gradient(rgba(255,255,255,0.12) 15%, transparent 16%);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+        }
+
+        .zone-top {
+            flex: 1;
+            background-color: #3b1464;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 10px 15px;
+            overflow: hidden;
+        }
+
+        .character-avatar {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            backdrop-filter: blur(4px);
+        }
+
+        .character-top {
+            top: 10px;
+            right: 15px;
+            transform: rotate(180deg);
+            border: 3px solid #f39c12;
+        }
+
+        .character-bottom {
+            bottom: 10px;
+            left: 15px;
+            border: 3px solid #f1c40f;
+        }
+
+        .zone-bottom {
+            flex: 1;
+            background-color: #00a8ff;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 10px 15px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .wave-divider {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 24px;
+            transform: translateY(-50%);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .balloon-wrap {
+            position: relative;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .star-balloon-svg {
+            width: 85px;
+            height: 85px;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.35));
+            transition: transform 0.08s ease-out;
+        }
+
+        .balloon-string-top {
+            width: 3px;
+            height: 100px;
+            background: repeating-linear-gradient(to bottom, #e74c3c, #e74c3c 4px, transparent 4px, transparent 7px);
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .balloon-string-bottom {
+            width: 3px;
+            height: 120px;
+            background: repeating-linear-gradient(to bottom, #2ecc71, #2ecc71 4px, transparent 4px, transparent 7px);
+            position: absolute;
+            bottom: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .score-badge {
+            position: absolute;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 900;
+            color: white;
+            z-index: 8;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .score-top { top: 12px; left: 14px; background: rgba(0,0,0,0.4); }
+        .score-bottom { bottom: 12px; right: 14px; background: rgba(0,0,0,0.35); }
+
+        .popped { animation: starPop 0.3s forwards cubic-bezier(0.1, 0.8, 0.3, 1); }
+        @keyframes starPop {
+            0% { transform: scale(3.5); opacity: 1; }
+            50% { transform: scale(4.2); opacity: 0.7; filter: blur(3px); }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .modal {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.65);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 24px;
+            text-align: center;
+            width: 85%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.6); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-frame" id="phone-container">
+
+        <div class="network-indicator">
+            <div class="dot" id="net-dot"></div>
+            <span id="net-text">Connecting...</span>
+        </div>
+
+        <audio id="cheer-sound" preload="auto">
+            <source src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3" type="audio/mpeg">
+        </audio>
+
+        <canvas id="fx-canvas"></canvas>
+
+        <!-- 1. Connect Screen -->
+        <div id="connect-screen">
+            <h1 class="main-title">🏰 Pop Arena Online</h1>
+            
+            <button class="btn-action btn-host" id="btn-create" onclick="createRoom()">👑 Create Room (Host)</button>
+            
+            <div id="host-code-display" style="display:none; margin: 8px 0; width: 100%;">
+                <p style="font-size: 13px; color: #8c531b; font-weight: bold;">Give this code to your partner:</p>
+                <div class="room-code-box" id="code-val">-----</div>
+                <button onclick="copyCode()" style="padding: 5px 12px; border-radius: 8px; border: 1px solid #d4a373; background: #fff; cursor: pointer; font-size: 12px; font-weight: bold;">📋 Copy</button>
+            </div>
+
+            <hr style="margin: 15px 0; width: 100%; border: none; border-top: 1px solid #d4a373; opacity: 0.4;">
+
+            <div class="input-group">
+                <input type="text" id="join-code" class="input-code" placeholder="CODE" maxlength="5">
+                <button class="btn-action btn-join" onclick="joinRoom()">Join</button>
+            </div>
+            <div class="status-txt" id="status-text">Status: Ready to play</div>
+        </div>
+
+        <!-- 2. Quests Screen -->
+        <div id="quests-screen">
+            <div class="header-title">
+                <h2>Daughter's</h2>
+                <span>Dream Quests</span>
+                <div class="compass-icon">🧭</div>
+            </div>
+
+            <div class="quests-grid">
+                <div class="quest-card unlocked" id="card-balloon">
+                    <div class="fairy-icon">🧚‍♀️</div>
+                    <div class="banner-text">POP THE<br>BALLOON</div>
+                </div>
+
+                <div class="quest-card">
+                    <div class="card-num">2 🐙</div>
+                    <div class="card-subtext">Deep Sea Adventure</div>
+                    <div class="lock-icon">🔒</div>
+                </div>
+
+                <div class="quest-card">
+                    <div class="card-num">3 🐉</div>
+                    <div class="card-subtext">Dragon's Lair</div>
+                    <div class="lock-icon">🔒</div>
+                </div>
+
+                <div class="quest-card">
+                    <div class="card-num">4 🌙</div>
+                    <div class="card-subtext">Starry Nights</div>
+                    <div class="lock-icon">🔒</div>
+                </div>
+
+                <div class="quest-card">
+                    <div class="card-num">5 🌻</div>
+                    <div class="card-subtext">Secret Gardens</div>
+                    <div class="lock-icon">🔒</div>
+                </div>
+
+                <div class="quest-card">
+                    <div class="card-num">6 💎</div>
+                    <div class="card-subtext">Hidden Treasure</div>
+                    <div class="lock-icon">🔒</div>
+                </div>
+            </div>
+
+            <div class="start-game-wrapper">
+                <button class="btn-stone-start" onclick="requestStartGame()">START GAME</button>
+                <div class="btn-settings">⚙️</div>
+            </div>
+        </div>
+
+        <!-- 3. Game Screen -->
+        <div id="game-screen">
+            <div class="zone-top pattern-bg">
+                <div class="score-badge score-top" id="opp-counter">Opponent: 0/30</div>
+                
+                <div class="balloon-wrap" id="opp-balloon-wrap" style="transform-origin: top center; margin-left: -50px;">
+                    <div class="balloon-string-top"></div>
+                    <svg class="star-balloon-svg" id="opp-balloon" viewBox="0 0 100 100">
+                        <defs>
+                            <radialGradient id="redGlow" cx="40%" cy="40%" r="60%">
+                                <stop offset="0%" stop-color="#ff7675"/>
+                                <stop offset="65%" stop-color="#d63031"/>
+                                <stop offset="100%" stop-color="#991b1b"/>
+                            </radialGradient>
+                            <filter id="shadowRed" x="-10%" y="-10%" width="130%" height="130%">
+                                <feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity="0.3"/>
+                            </filter>
+                        </defs>
+                        <path d="M50 8 L62 35 L92 37 L68 56 L76 85 L50 69 L24 85 L32 56 L8 37 L38 35 Z" 
+                              fill="url(#redGlow)" stroke="#c0392b" stroke-width="2.5" stroke-linejoin="round" filter="url(#shadowRed)"/>
+                        <ellipse cx="38" cy="28" rx="7" ry="4" transform="rotate(-30 38 28)" fill="#ffffff" opacity="0.65"/>
+                        <circle cx="30" cy="38" r="3" fill="#ffffff" opacity="0.5"/>
+                    </svg>
+                </div>
+
+                <div class="character-avatar character-top">
+                    <svg width="60" height="60" viewBox="0 0 100 100">
+                        <circle cx="50" cy="35" r="25" fill="#f39c12"/>
+                        <path d="M20 90 Q50 60 80 90" stroke="#f39c12" stroke-width="12" fill="none" stroke-linecap="round"/>
+                    </svg>
+                </div>
+            </div>
+
+            <svg class="wave-divider" viewBox="0 0 400 24" preserveAspectRatio="none">
+                <path d="M0,12 C70,24 130,0 200,12 C270,24 330,0 400,12 L400,24 L0,24 Z" fill="#00a8ff"/>
+                <path d="M0,12 C70,24 130,0 200,12 C270,24 330,0 400,12" fill="none" stroke="#a29bfe" stroke-width="3.5"/>
+            </svg>
+
+            <div class="zone-bottom pattern-bg" id="tap-area">
+                <div class="score-badge score-bottom" id="my-counter">YOU: 0/30 (TAP!)</div>
+
+                <div class="character-avatar character-bottom">
+                    <svg width="60" height="60" viewBox="0 0 100 100">
+                        <circle cx="50" cy="35" r="25" fill="#f1c40f"/>
+                        <path d="M20 90 Q50 60 80 90" stroke="#f1c40f" stroke-width="12" fill="none" stroke-linecap="round"/>
+                    </svg>
+                </div>
+
+                <div class="balloon-wrap" id="my-balloon-wrap" style="transform-origin: bottom center; margin-right: -70px;">
+                    <svg class="star-balloon-svg" id="my-balloon" viewBox="0 0 100 100">
+                        <defs>
+                            <radialGradient id="greenGlow" cx="40%" cy="40%" r="60%">
+                                <stop offset="0%" stop-color="#55efc4"/>
+                                <stop offset="65%" stop-color="#00b894"/>
+                                <stop offset="100%" stop-color="#006266"/>
+                            </radialGradient>
+                            <filter id="shadowGreen" x="-10%" y="-10%" width="130%" height="130%">
+                                <feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity="0.3"/>
+                            </filter>
+                        </defs>
+                        <path d="M50 8 L62 35 L92 37 L68 56 L76 85 L50 69 L24 85 L32 56 L8 37 L38 35 Z" 
+                              fill="url(#greenGlow)" stroke="#009470" stroke-width="2.5" stroke-linejoin="round" filter="url(#shadowGreen)"/>
+                        <ellipse cx="38" cy="28" rx="7" ry="4" transform="rotate(-30 38 28)" fill="#ffffff" opacity="0.7"/>
+                        <circle cx="30" cy="38" r="3" fill="#ffffff" opacity="0.55"/>
+                    </svg>
+                    <div class="balloon-string-bottom"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Win Modal -->
+        <div class="modal" id="win-modal">
+            <div class="modal-content">
+                <h2 id="win-title" style="margin-bottom: 10px; font-size: 22px;">You Won! 🏆</h2>
+                <p id="win-subtitle" style="color: #666; margin-bottom: 20px; font-size: 14px;">Incredible speed!</p>
+                <button class="btn-action btn-host" onclick="backToQuestsMenu()">Back to Quests</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let ws = null;
+        let roomCode = '';
+        let myRole = '';
+        let myId = 'u_' + Math.random().toString(36).substring(2, 9);
+        let myScore = 0;
+        let oppScore = 0;
+        let gameOver = false;
+        let isConnected = false;
+        let pingInterval = null;
+        const maxScore = 30;
+
+        const API_KEY = "VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV";
+
+        function updateStatus(txt) {
+            document.getElementById('status-text').innerText = "Status: " + txt;
+        }
+
+        function setNetworkIndicator(status, text) {
+            const dot = document.getElementById('net-dot');
+            const txt = document.getElementById('net-text');
+            dot.className = "dot " + status;
+            txt.innerText = text;
+        }
+
+        function generateCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let res = '';
+            for (let i = 0; i < 5; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+            return res;
+        }
+
+        function copyCode() {
+            const code = document.getElementById('code-val').innerText;
+            navigator.clipboard.writeText(code).then(() => alert("Code copied!"));
+        }
+
+        function connectSocket(code, onOpen) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                if (onOpen) onOpen();
+                return;
+            }
+
+            setNetworkIndicator("", "Connecting...");
+            const url = `wss://demo.piesocket.com/v3/popquest_${code.toLowerCase()}?api_key=${API_KEY}&notify_self=0`;
+
+            try {
+                ws = new WebSocket(url);
+
+                ws.onopen = () => {
+                    setNetworkIndicator("online", "Connected");
+                    if (onOpen) onOpen();
+                };
+
+                ws.onmessage = (e) => {
+                    try {
+                        const data = JSON.parse(e.data);
+                        if (data.senderId === myId) return;
+
+                        if (data.type === 'join_request') {
+                            if (myRole === 'host') {
+                                sendMsg({ type: 'join_accept' });
+                                openLobby();
+                            }
+                        } else if (data.type === 'join_accept') {
+                            openLobby();
+                        } else if (data.type === 'start_game') {
+                            launchBalloonGame();
+                        } else if (data.type === 'tap') {
+                            oppScore = data.score;
+                            renderBalloons();
+                            checkWin();
+                        } else if (data.type === 'back_to_menu') {
+                            showQuestsScreen();
+                        }
+                    } catch (err) {}
+                };
+
+                ws.onerror = () => setNetworkIndicator("error", "Reconnecting...");
+                ws.onclose = () => setNetworkIndicator("error", "Disconnected");
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function sendMsg(obj) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                obj.senderId = myId;
+                ws.send(JSON.stringify(obj));
+            }
+        }
+
+        function createRoom() {
+            myRole = 'host';
+            roomCode = generateCode();
+
+            document.getElementById('btn-create').style.display = 'none';
+            document.getElementById('code-val').innerText = roomCode;
+            document.getElementById('host-code-display').style.display = 'block';
+            updateStatus("Waiting for player to connect...");
+
+            connectSocket(roomCode, () => {
+                updateStatus("Room ready! Share code: " + roomCode);
+            });
+        }
+
+        function joinRoom() {
+            myRole = 'guest';
+            let inputVal = document.getElementById('join-code').value.trim().toUpperCase();
+            if (!inputVal) return alert("Please enter room code!");
+
+            roomCode = inputVal;
+            updateStatus("Connecting to " + roomCode + "...");
+
+            connectSocket(roomCode, () => {
+                updateStatus("Connected! Joining host...");
+                if (pingInterval) clearInterval(pingInterval);
+                sendMsg({ type: 'join_request' });
+
+                pingInterval = setInterval(() => {
+                    if (isConnected) {
+                        clearInterval(pingInterval);
+                        return;
+                    }
+                    sendMsg({ type: 'join_request' });
+                }, 500);
+            });
+        }
+
+        document.getElementById('join-code').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') joinRoom();
+        });
+
+        function openLobby() {
+            if (isConnected) return;
+            isConnected = true;
+            if (pingInterval) clearInterval(pingInterval);
+            document.getElementById('connect-screen').style.display = 'none';
+            document.getElementById('quests-screen').style.display = 'flex';
+        }
+
+        function requestStartGame() {
+            sendMsg({ type: 'start_game' });
+            launchBalloonGame();
+        }
+
+        function launchBalloonGame() {
+            myScore = 0;
+            oppScore = 0;
+            gameOver = false;
+            stopCelebrationFX();
+
+            document.getElementById('my-balloon').classList.remove('popped');
+            document.getElementById('opp-balloon').classList.remove('popped');
+            document.getElementById('win-modal').style.display = 'none';
+            renderBalloons();
+
+            document.getElementById('quests-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+            initTapping();
+        }
+
+        function initTapping() {
+            const tapArea = document.getElementById('tap-area');
+            tapArea.onpointerdown = (e) => {
+                e.preventDefault();
+                if (!gameOver && myScore < maxScore && oppScore < maxScore) {
+                    myScore++;
+                    renderBalloons();
+                    sendMsg({ type: 'tap', score: myScore });
+                    checkWin();
+                }
+            };
+        }
+
+        function renderBalloons() {
+            const myScale = 1 + (myScore * 0.065);
+            const oppScale = 1 + (oppScore * 0.065);
+            
+            document.getElementById('my-balloon-wrap').style.transform = `scale(${myScale})`;
+            document.getElementById('opp-balloon-wrap').style.transform = `scale(${oppScale})`;
+
+            document.getElementById('my-counter').innerText = `YOU: ${myScore}/${maxScore}`;
+            document.getElementById('opp-counter').innerText = `Opponent: ${oppScore}/${maxScore}`;
+        }
+
+        function playVictoryAudio() {
+            const audio = document.getElementById('cheer-sound');
+            if (audio) {
+                audio.currentTime = 0;
+                audio.volume = 0.85;
+                audio.play().catch(e => console.log(e));
+            }
+
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) {
+                    const ctx = new AudioCtx();
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, index) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.value = freq;
+                        
+                        const startTime = ctx.currentTime + (index * 0.12);
+                        gain.gain.setValueAtTime(0.01, startTime);
+                        gain.gain.exponentialRampToValueAtTime(0.3, startTime + 0.05);
+                        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.8);
+                        
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        
+                        osc.start(startTime);
+                        osc.stop(startTime + 0.8);
+                    });
+                }
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        function checkWin() {
+            if (gameOver) return;
+
+            if (myScore >= maxScore) {
+                gameOver = true;
+                document.getElementById('my-balloon').classList.add('popped');
+                startCelebrationFX();
+                playVictoryAudio();
+
+                setTimeout(() => {
+                    document.getElementById('win-title').innerText = "You Won! 🏆";
+                    document.getElementById('win-subtitle').innerText = "Green Balloon popped first!";
+                    document.getElementById('win-modal').style.display = 'flex';
+                }, 300);
+            } else if (oppScore >= maxScore) {
+                gameOver = true;
+                document.getElementById('opp-balloon').classList.add('popped');
+                setTimeout(() => {
+                    document.getElementById('win-title').innerText = "Opponent Won! 🎈";
+                    document.getElementById('win-subtitle').innerText = "Red Balloon popped first!";
+                    document.getElementById('win-modal').style.display = 'flex';
+                }, 300);
+            }
+        }
+
+        function backToQuestsMenu() {
+            sendMsg({ type: 'back_to_menu' });
+            showQuestsScreen();
+        }
+
+        function showQuestsScreen() {
+            stopCelebrationFX();
+            const audio = document.getElementById('cheer-sound');
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+            document.getElementById('win-modal').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('quests-screen').style.display = 'flex';
+        }
+
+        /* Particles and Effects */
+        let fxCanvas = document.getElementById('fx-canvas');
+        let ctx = fxCanvas.getContext('2d');
+        let fxAnimId = null;
+        let particles = [];
+        let rockets = [];
+
+        function resizeFxCanvas() {
+            const rect = document.getElementById('phone-container').getBoundingClientRect();
+            fxCanvas.width = rect.width;
+            fxCanvas.height = rect.height;
+        }
+
+        function startCelebrationFX() {
+            resizeFxCanvas();
+            fxCanvas.style.display = 'block';
+            particles = [];
+            rockets = [];
+
+            const colors = ['#2ecc71', '#ff4757', '#1e90ff', '#ffa502', '#9b59b6', '#ffd32a'];
+            for (let i = 0; i < 65; i++) {
+                particles.push({
+                    x: Math.random() * fxCanvas.width,
+                    y: -10 - Math.random() * 50,
+                    size: 6 + Math.random() * 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: (Math.random() - 0.5) * 3,
+                    vy: 2 + Math.random() * 4,
+                    rotation: Math.random() * 360,
+                    vRot: (Math.random() - 0.5) * 8,
+                    isConfetti: true
+                });
+            }
+
+            let rocketTimer = 0;
+
+            function loop() {
+                ctx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+
+                rocketTimer++;
+                if (rocketTimer % 22 === 0 && rockets.length < 5) {
+                    rockets.push({
+                        x: Math.random() * (fxCanvas.width - 60) + 30,
+                        y: fxCanvas.height,
+                        targetY: Math.random() * (fxCanvas.height * 0.45) + (fxCanvas.height * 0.1),
+                        vy: -7 - Math.random() * 3,
+                        color: colors[Math.floor(Math.random() * colors.length)]
+                    });
+                }
+
+                for (let i = rockets.length - 1; i >= 0; i--) {
+                    let r = rockets[i];
+                    r.y += r.vy;
+
+                    ctx.beginPath();
+                    ctx.arc(r.x, r.y, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = r.color;
+                    ctx.fill();
+
+                    if (r.y <= r.targetY || r.vy >= 0) {
+                        createExplosion(r.x, r.y, r.color);
+                        rockets.splice(i, 1);
+                    }
+                }
+
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    let p = particles[i];
+
+                    if (p.isConfetti) {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.rotation += p.vRot;
+
+                        ctx.save();
+                        ctx.translate(p.x, p.y);
+                        ctx.rotate((p.rotation * Math.PI) / 180);
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+                        ctx.restore();
+
+                        if (p.y > fxCanvas.height + 20) {
+                            p.y = -10;
+                            p.x = Math.random() * fxCanvas.width;
+                        }
+                    } else {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.08;
+                        p.alpha -= 0.015;
+
+                        ctx.save();
+                        ctx.globalAlpha = Math.max(p.alpha, 0);
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fillStyle = p.color;
+                        ctx.fill();
+                        ctx.restore();
+
+                        if (p.alpha <= 0) {
+                            particles.splice(i, 1);
+                        }
+                    }
+                }
+
+                fxAnimId = requestAnimationFrame(loop);
+            }
+
+            loop();
+        }
+
+        function createExplosion(x, y, color) {
+            const count = 35;
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5);
+                const speed = 2 + Math.random() * 4;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: 2 + Math.random() * 2,
+                    color: color,
+                    alpha: 1,
+                    isConfetti: false
+                });
+            }
+        }
+
+        function stopCelebrationFX() {
+            if (fxAnimId) {
+                cancelAnimationFrame(fxAnimId);
+                fxAnimId = null;
+            }
+            if (ctx) ctx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+            fxCanvas.style.display = 'none';
+            particles = [];
+            rockets = [];
+        }
+    </script>
+</body>
+</html>
