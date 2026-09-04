@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Daughter's Dream Quests - Online</title>
-    <!-- PeerJS CDN -->
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <title>Daughter's Dream Quests - Local Online</title>
+    <!-- PeerJS with Multiple Fallback Servers -->
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         * { 
             box-sizing: border-box; 
@@ -43,18 +43,6 @@
             overflow: hidden;
         }
 
-        #fx-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 90;
-            display: none;
-        }
-
-        /* Lobby / Connection UI */
         #lobby-screen {
             display: flex;
             flex-direction: column;
@@ -64,19 +52,9 @@
             align-items: center;
         }
 
-        .header-title {
-            text-align: center;
-            margin-top: 10px;
-        }
-        .header-title h2 {
-            color: #c97a2b;
-            font-size: 24px;
-            font-weight: 900;
-        }
-        .header-title span {
-            color: #e28743;
-            font-size: 16px;
-        }
+        .header-title { text-align: center; margin-top: 10px; }
+        .header-title h2 { color: #c97a2b; font-size: 24px; font-weight: 900; }
+        .header-title span { color: #e28743; font-size: 16px; }
 
         .online-box {
             background: #ffffff;
@@ -89,12 +67,12 @@
         }
 
         .status-tag {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
-            padding: 4px 10px;
+            padding: 6px 12px;
             border-radius: 10px;
-            background: #e2e8f0;
-            color: #475569;
+            background: #fef3c7;
+            color: #d97706;
             display: inline-block;
             margin-bottom: 15px;
         }
@@ -106,7 +84,7 @@
             color: white;
             font-size: 16px;
             font-weight: 900;
-            padding: 10px 20px;
+            padding: 12px 20px;
             cursor: pointer;
             box-shadow: 0 4px 0 #023e8a;
             width: 100%;
@@ -115,29 +93,28 @@
         .btn-action:active { transform: translateY(2px); }
 
         .room-code-display {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 900;
-            letter-spacing: 4px;
+            letter-spacing: 6px;
             color: #d63031;
             margin: 10px 0;
             background: #f1f2f6;
-            padding: 8px;
+            padding: 10px;
             border-radius: 12px;
         }
 
         .join-input {
             width: 100%;
             padding: 12px;
-            font-size: 20px;
+            font-size: 22px;
             text-align: center;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
             border: 2px solid #cbd5e1;
             border-radius: 12px;
             margin-bottom: 10px;
             text-transform: uppercase;
         }
 
-        /* Game Screen */
         #game-screen {
             display: none;
             width: 100%;
@@ -165,8 +142,8 @@
         }
 
         .star-balloon-svg {
-            width: 120px;
-            height: 120px;
+            width: 130px;
+            height: 130px;
             filter: drop-shadow(0 8px 16px rgba(0,0,0,0.35));
         }
 
@@ -181,66 +158,56 @@
             background: rgba(0,0,0,0.4);
         }
 
-        .popped { animation: starPop 0.3s forwards cubic-bezier(0.1, 0.8, 0.3, 1); }
-        @keyframes starPop {
-            0% { transform: scale(3.5); opacity: 1; }
-            100% { transform: scale(0); opacity: 0; }
-        }
+        .popped { animation: starPop 0.3s forwards; }
+        @keyframes starPop { 0% { transform: scale(3.5); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
 
         .modal {
             display: none;
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7);
-            align-items: center;
-            justify-content: center;
+            align-items: center; justify-content: center;
             z-index: 100;
         }
         .modal-content {
-            background: white;
-            padding: 24px;
-            border-radius: 24px;
-            text-align: center;
-            width: 85%;
+            background: white; padding: 24px; border-radius: 24px; text-align: center; width: 85%;
         }
     </style>
 </head>
 <body>
 
-    <div class="phone-frame" id="phone-container">
-        <canvas id="fx-canvas"></canvas>
-
+    <div class="phone-frame">
         <!-- Lobby Screen -->
         <div id="lobby-screen">
             <div class="header-title">
                 <h2>Daughter's</h2>
-                <span>Dream Quests (Online 2P)</span>
+                <span>Dream Quests (Direct 2P)</span>
             </div>
 
             <div class="online-box">
-                <div class="status-tag" id="status-text">اتصال به شبکه...</div>
+                <div class="status-tag" id="status-text">در حال آماده‌سازی شبکه...</div>
 
                 <div id="setup-controls">
-                    <button class="btn-action" onclick="createRoom()">ایجاد اتاق (Host)</button>
-                    <div style="margin: 10px 0; font-size: 12px; color: #888;">یا ورود به اتاق دیگر:</div>
-                    <input type="text" id="room-input" class="join-input" placeholder="کد ۴ رقمی" maxlength="4">
-                    <button class="btn-action" style="background: #2ecc71; box-shadow: 0 4px 0 #27ae60;" onclick="joinRoom()">ورود به بازی (Join)</button>
+                    <button class="btn-action" onclick="createRoom()">ساخت اتاق جدید</button>
+                    <div style="margin: 10px 0; font-size: 13px; color: #888;">یا کد اتاق دیگر را بزنید:</div>
+                    <input type="number" id="room-input" class="join-input" placeholder="کد ۴ رقمی" pattern="\d*">
+                    <button class="btn-action" style="background: #2ecc71; box-shadow: 0 4px 0 #27ae60;" onclick="joinRoom()">ورود به اتاق</button>
                 </div>
 
                 <div id="room-info" style="display: none;">
                     <div style="font-size: 13px; color: #555;">کد اتاق شما:</div>
                     <div class="room-code-display" id="my-code">----</div>
-                    <div style="font-size: 12px; color: #888;">این کد را به نفر دوم بدهید</div>
+                    <div style="font-size: 12px; color: #666;">این کد را در گوشی دوم وارد کنید</div>
                 </div>
             </div>
 
-            <div style="font-size: 11px; color: #aaa; text-align: center;">Peer-to-Peer Direct Connection</div>
+            <div style="font-size: 11px; color: #888; text-align: center;">نکته: اتصال به یک Wi-Fi یا Hotspot مشترک سرعت را فوق‌العاده می‌کند.</div>
         </div>
 
         <!-- Game Screen -->
         <div id="game-screen">
             <div class="score-badge" id="my-score-badge">من: ۰ / ۳۰</div>
-            <div class="score-badge" style="top: 50px; background: rgba(0,0,0,0.2);" id="op-score-badge">حریف: ۰</div>
+            <div class="score-badge" style="top: 50px; background: rgba(0,0,0,0.25);" id="op-score-badge">حریف: ۰</div>
 
             <div class="game-zone" id="tap-zone">
                 <div class="balloon-wrap" id="my-balloon-wrap">
@@ -273,54 +240,57 @@
         let conn = null;
         let myScore = 0;
         let opponentScore = 0;
-        let isHost = false;
         let gameOver = false;
         const maxScore = 30;
 
-        // Generate simple 4-digit code
-        const customId = Math.floor(1000 + Math.random() * 9000).toString();
+        const roomCode = Math.floor(1000 + Math.random() * 9000).toString();
 
         function initPeer() {
-            peer = new Peer('dq-' + customId);
+            // Using stable PeerJS configurations
+            peer = new Peer('dq-room-' + roomCode, {
+                debug: 1
+            });
 
-            peer.on('open', (id) => {
-                document.getElementById('status-text').innerText = "آماده اتصال";
+            peer.on('open', () => {
+                document.getElementById('status-text').innerText = "شبکه آماده است";
                 document.getElementById('status-text').style.background = "#dcfce7";
                 document.getElementById('status-text').style.color = "#166534";
             });
 
             peer.on('connection', (c) => {
                 conn = c;
-                setupConnection();
+                bindConnection();
             });
 
             peer.on('error', (err) => {
-                document.getElementById('status-text').innerText = "خطا در شبکه. مجدد تلاش کنید";
+                console.log(err);
+                document.getElementById('status-text').innerText = "خطا در اتصال. صفحه را رفرش کنید";
+                document.getElementById('status-text').style.background = "#fee2e2";
+                document.getElementById('status-text').style.color = "#991b1b";
             });
         }
 
         initPeer();
 
         function createRoom() {
-            isHost = true;
             document.getElementById('setup-controls').style.display = 'none';
             document.getElementById('room-info').style.display = 'block';
-            document.getElementById('my-code').innerText = customId;
-            document.getElementById('status-text').innerText = "منتظر ورود نفر دوم...";
+            document.getElementById('my-code').innerText = roomCode;
+            document.getElementById('status-text').innerText = "منتظر گوشی دوم...";
         }
 
         function joinRoom() {
-            const code = document.getElementById('room-input').value.trim();
-            if (code.length !== 4) {
-                alert('لطفاً کد ۴ رقمی را درست وارد کنید');
+            const inputCode = document.getElementById('room-input').value.trim();
+            if (inputCode.length !== 4) {
+                alert('کد ۴ رقمی را وارد کنید');
                 return;
             }
             document.getElementById('status-text').innerText = "در حال اتصال به اتاق...";
-            conn = peer.connect('dq-' + code);
-            setupConnection();
+            conn = peer.connect('dq-room-' + inputCode, { reliable: true });
+            bindConnection();
         }
 
-        function setupConnection() {
+        function bindConnection() {
             conn.on('open', () => {
                 startGame();
             });
@@ -328,9 +298,14 @@
             conn.on('data', (data) => {
                 if (data.type === 'TAP') {
                     opponentScore = data.score;
-                    updateOpponentUI();
+                    document.getElementById('op-score-badge').innerText = `حریف: ${opponentScore}`;
                     checkWin();
                 }
+            });
+
+            conn.on('close', () => {
+                alert('اتصال قطع شد');
+                location.reload();
             });
         }
 
@@ -343,20 +318,15 @@
                 if (gameOver) return;
 
                 myScore++;
-                updateMyUI();
-                conn.send({ type: 'TAP', score: myScore });
+                const scale = 1 + (myScore * 0.05);
+                document.getElementById('my-balloon-wrap').style.transform = `scale(${scale})`;
+                document.getElementById('my-score-badge').innerText = `من: ${myScore} / ${maxScore}`;
+
+                if (conn && conn.open) {
+                    conn.send({ type: 'TAP', score: myScore });
+                }
                 checkWin();
             };
-        }
-
-        function updateMyUI() {
-            const scale = 1 + (myScore * 0.05);
-            document.getElementById('my-balloon-wrap').style.transform = `scale(${scale})`;
-            document.getElementById('my-score-badge').innerText = `من: ${myScore} / ${maxScore}`;
-        }
-
-        function updateOpponentUI() {
-            document.getElementById('op-score-badge').innerText = `حریف: ${opponentScore}`;
         }
 
         function checkWin() {
